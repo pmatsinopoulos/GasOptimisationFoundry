@@ -1,0 +1,2 @@
+1. 2 659 266
+2. 2 658 947 after moving isReady boolean variable below contractOwner
