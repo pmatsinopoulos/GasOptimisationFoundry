@@ -3,11 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./Ownable.sol";
 
-contract Constants {
-    uint256 public basicFlag;
-}
-
-contract GasContract is Ownable, Constants {
+contract GasContract is Ownable {
     uint256 public immutable totalSupply; // cannot be updated
     uint256 public paymentCounter;
     mapping(address => uint256) public balances;
