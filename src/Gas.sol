@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 import "./Ownable.sol";
 
 contract Constants {
-    uint256 public tradeFlag = 1;
     uint256 public basicFlag;
-    uint256 public dividendFlag = 1;
 }
 
 contract GasContract is Ownable, Constants {
@@ -16,6 +14,7 @@ contract GasContract is Ownable, Constants {
     uint256 public constant tradePercent = 12;
     address public contractOwner;
     bool public isReady = false;
+    bool public constant tradingMode = true;
     uint256 public tradeMode;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
@@ -154,16 +153,6 @@ contract GasContract is Ownable, Constants {
         return balance;
     }
 
-    function getTradingMode() public view returns (bool mode_) {
-        bool mode = false;
-        if (tradeFlag == 1 || dividendFlag == 1) {
-            mode = true;
-        } else {
-            mode = false;
-        }
-        return mode;
-    }
-
     function addHistory(
         address _updateAddress,
         bool _tradeMode
@@ -250,7 +239,6 @@ contract GasContract is Ownable, Constants {
                 payments[_user][ii].admin = _user;
                 payments[_user][ii].paymentType = _type;
                 payments[_user][ii].amount = _amount;
-                bool tradingMode = getTradingMode();
                 addHistory(_user, tradingMode);
                 emit PaymentUpdated(
                     senderOfTx,
