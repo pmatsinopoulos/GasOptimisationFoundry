@@ -60,41 +60,6 @@ contract GasContract is Ownable {
 
     event AddedToWhitelist(address userAddress, uint256 tier);
 
-    modifier onlyAdminOrOwner() {
-        address senderOfTx = msg.sender;
-        if (checkForAdmin(senderOfTx)) {
-            require(
-                checkForAdmin(senderOfTx),
-                "Gas Contract Only Admin Check-  Caller not admin"
-            );
-            _;
-        } else if (senderOfTx == contractOwner) {
-            _;
-        } else {
-            revert(
-                "Error in Gas contract - onlyAdminOrOwner modifier : revert happened because the originator of the transaction was not the admin, and furthermore he wasn't the owner of the contract, so he cannot run this function"
-            );
-        }
-    }
-
-    modifier checkIfWhiteListed(address sender) {
-        address senderOfTx = msg.sender;
-        require(
-            senderOfTx == sender,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the originator of the transaction was not the sender"
-        );
-        uint256 usersTier = whitelist[senderOfTx];
-        require(
-            usersTier > 0,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user is not whitelisted"
-        );
-        require(
-            usersTier < 4,
-            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user's tier is incorrect, it cannot be over 4 as the only tier we have are: 1, 2, 3; therfore 4 is an invalid tier for the whitlist of this contract. make sure whitlist tiers were set correctly"
-        );
-        _;
-    }
-
     event supplyChanged(address indexed, uint256 indexed);
     event Transfer(address recipient, uint256 amount);
     event PaymentUpdated(
@@ -213,7 +178,9 @@ contract GasContract is Ownable {
         uint256 _ID,
         uint256 _amount,
         PaymentType _type
-    ) public onlyAdminOrOwner {
+    ) public {
+        onlyAdminOrOwner();
+
         require(
             _ID > 0,
             "Gas Contract - Update Payment function - ID must be greater than 0"
@@ -246,10 +213,9 @@ contract GasContract is Ownable {
         }
     }
 
-    function addToWhitelist(
-        address _userAddrs,
-        uint256 _tier
-    ) public onlyAdminOrOwner {
+    function addToWhitelist(address _userAddrs, uint256 _tier) public {
+        onlyAdminOrOwner();
+
         require(
             _tier < 255,
             "Gas Contract - addToWhitelist function -  tier level should not be greater than 255"
@@ -278,10 +244,9 @@ contract GasContract is Ownable {
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
-    function whiteTransfer(
-        address _recipient,
-        uint256 _amount
-    ) public checkIfWhiteListed(msg.sender) {
+    function whiteTransfer(address _recipient, uint256 _amount) public {
+        checkIfWhiteListed(msg.sender);
+
         address senderOfTx = msg.sender;
         whiteListStruct[senderOfTx] = ImportantStruct(
             _amount,
@@ -323,5 +288,40 @@ contract GasContract is Ownable {
 
     fallback() external payable {
         payable(msg.sender).transfer(msg.value);
+    }
+
+    // internal functions
+
+    function onlyAdminOrOwner() internal view {
+        address senderOfTx = msg.sender;
+        if (checkForAdmin(senderOfTx)) {
+            require(
+                checkForAdmin(senderOfTx),
+                "Gas Contract Only Admin Check-  Caller not admin"
+            );
+        } else if (senderOfTx == contractOwner) {
+            return;
+        } else {
+            revert(
+                "Error in Gas contract - onlyAdminOrOwner modifier : revert happened because the originator of the transaction was not the admin, and furthermore he wasn't the owner of the contract, so he cannot run this function"
+            );
+        }
+    }
+
+    function checkIfWhiteListed(address sender) internal view {
+        address senderOfTx = msg.sender;
+        require(
+            senderOfTx == sender,
+            "Gas Contract CheckIfWhiteListed modifier : revert happened because the originator of the transaction was not the sender"
+        );
+        uint256 usersTier = whitelist[senderOfTx];
+        require(
+            usersTier > 0,
+            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user is not whitelisted"
+        );
+        require(
+            usersTier < 4,
+            "Gas Contract CheckIfWhiteListed modifier : revert happened because the user's tier is incorrect, it cannot be over 4 as the only tier we have are: 1, 2, 3; therfore 4 is an invalid tier for the whitlist of this contract. make sure whitlist tiers were set correctly"
+        );
     }
 }
