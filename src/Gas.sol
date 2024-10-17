@@ -5,18 +5,18 @@ import "./Ownable.sol";
 
 contract Constants {
     uint256 public tradeFlag = 1;
-    uint256 public basicFlag = 0;
+    uint256 public basicFlag;
     uint256 public dividendFlag = 1;
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public immutable totalSupply = 0; // cannot be updated
-    uint256 public paymentCounter = 0;
+    uint256 public immutable totalSupply; // cannot be updated
+    uint256 public paymentCounter;
     mapping(address => uint256) public balances;
     uint256 public constant tradePercent = 12;
     address public contractOwner;
     bool public isReady = false;
-    uint256 public tradeMode = 0;
+    uint256 public tradeMode;
     mapping(address => Payment[]) public payments;
     mapping(address => uint256) public whitelist;
     address[5] public administrators;
