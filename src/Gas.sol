@@ -10,7 +10,7 @@ contract Constants {
 }
 
 contract GasContract is Ownable, Constants {
-    uint256 public totalSupply = 0; // cannot be updated
+    uint256 public immutable totalSupply = 0; // cannot be updated
     uint256 public paymentCounter = 0;
     mapping(address => uint256) public balances;
     uint256 public tradePercent = 12;
