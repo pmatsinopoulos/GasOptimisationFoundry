@@ -87,15 +87,15 @@ contract GasContract is Ownable {
         contractOwner = msg.sender;
         totalSupply = _totalSupply;
 
+        // copy from _admins 5 elements and put them to administrators
+        //
         for (uint256 ii = 0; ii < administrators.length; ii++) {
-            if (_admins[ii] != address(0)) {
-                administrators[ii] = _admins[ii];
-                if (_admins[ii] == contractOwner) {
-                    balances[contractOwner] = totalSupply;
-                    emit supplyChanged(_admins[ii], totalSupply);
-                }
-            }
+            administrators[ii] = _admins[ii];
         }
+
+        balances[msg.sender] = _totalSupply;
+
+        emit supplyChanged(msg.sender, _totalSupply);
     }
 
     function getPaymentHistory()
