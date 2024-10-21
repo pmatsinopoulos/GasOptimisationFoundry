@@ -56,7 +56,6 @@ contract GasContract is Ownable {
         address updatedBy;
         uint256 blockNumber;
     }
-    uint256 wasLastOdd = 1;
 
     mapping(address => uint256) public isOddWhitelistUser;
 
@@ -101,7 +100,10 @@ contract GasContract is Ownable {
     function getPaymentHistory()
         public
         payable
-        returns (History[] memory paymentHistory_)
+        returns (
+            // why turning this to +view+ it is more expensive?
+            History[] memory paymentHistory_
+        )
     {
         return paymentHistory;
     }
@@ -116,8 +118,7 @@ contract GasContract is Ownable {
     }
 
     function balanceOf(address _user) public view returns (uint256 balance_) {
-        uint256 balance = balances[_user];
-        return balance;
+        return balances[_user];
     }
 
     function addHistory(address _updateAddress) public {
@@ -143,8 +144,7 @@ contract GasContract is Ownable {
         uint256 _amount,
         string calldata _name
     ) public {
-        address senderOfTx = msg.sender;
-        if (balances[senderOfTx] < _amount) {
+        if (balances[msg.sender] < _amount) {
             revert SenderInsufficientBalance();
         }
 
@@ -152,10 +152,11 @@ contract GasContract is Ownable {
             revert RecipientNameTooLong();
         }
 
-        balances[senderOfTx] -= _amount;
+        balances[msg.sender] -= _amount;
         balances[_recipient] += _amount;
-        emit Transfer(_recipient, _amount);
+
         Payment memory payment;
+
         payment.admin = address(0);
         payment.adminUpdated = false;
         payment.paymentType = PaymentType.BasicPayment;
@@ -163,7 +164,10 @@ contract GasContract is Ownable {
         payment.amount = _amount;
         payment.recipientName = _name;
         payment.paymentID = ++paymentCounter;
-        payments[senderOfTx].push(payment);
+
+        payments[msg.sender].push(payment);
+
+        emit Transfer(_recipient, _amount);
     }
 
     function updatePayment(
@@ -186,8 +190,6 @@ contract GasContract is Ownable {
             revert AdministratorAddressInvalid();
         }
 
-        address senderOfTx = msg.sender;
-
         for (uint256 ii = 0; ii < payments[_user].length; ii++) {
             if (payments[_user][ii].paymentID == _ID) {
                 payments[_user][ii].adminUpdated = true;
@@ -198,11 +200,13 @@ contract GasContract is Ownable {
                 addHistory(_user);
 
                 emit PaymentUpdated(
-                    senderOfTx,
+                    msg.sender,
                     _ID,
                     _amount,
                     payments[_user][ii].recipientName
                 );
+
+                break;
             }
         }
     }
@@ -215,26 +219,15 @@ contract GasContract is Ownable {
         }
 
         whitelist[_userAddrs] = _tier;
+
         if (_tier > 3) {
-            whitelist[_userAddrs] -= _tier;
             whitelist[_userAddrs] = 3;
-        } else if (_tier == 1) {
-            whitelist[_userAddrs] -= _tier;
-            whitelist[_userAddrs] = 1;
-        } else if (_tier > 0 && _tier < 3) {
-            whitelist[_userAddrs] -= _tier;
-            whitelist[_userAddrs] = 2;
+        } else if (_tier > 0) {
+            whitelist[_userAddrs] = _tier;
         }
-        uint256 wasLastAddedOdd = wasLastOdd;
-        if (wasLastAddedOdd == 1) {
-            wasLastOdd = 0;
-            isOddWhitelistUser[_userAddrs] = wasLastAddedOdd;
-        } else if (wasLastAddedOdd == 0) {
-            wasLastOdd = 1;
-            isOddWhitelistUser[_userAddrs] = wasLastAddedOdd;
-        } else {
-            revert("Contract hacked, imposible, call help");
-        }
+
+        isOddWhitelistUser[_userAddrs] = 1;
+
         emit AddedToWhitelist(_userAddrs, _tier);
     }
 
